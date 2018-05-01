@@ -31,7 +31,7 @@ namespace TritonKinshi.Core.Extensions
             {
                 return string.Empty;
             }
-		    
+
             var htmlCollection = HttpUtility.ParseQueryString(string.Empty);
             htmlCollection.Add(collection);
 
