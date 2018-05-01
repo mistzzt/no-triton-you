@@ -91,6 +91,7 @@ namespace TritonKinshi.Core
             }
 
             _password?.Dispose();
+            _client?.Dispose();
             _disposed = true;
         }
     }

@@ -14,7 +14,7 @@ namespace TritonKinshi.Core
 
         string Balance { get; }
 
-        Task<IWebReg> CreateWebRegInstanceAsync();
+        IWebReg CreateWebRegInstance();
 
         Task LogoutAsync();
 

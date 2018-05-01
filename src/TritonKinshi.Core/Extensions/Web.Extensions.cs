@@ -17,7 +17,7 @@ namespace TritonKinshi.Core.Extensions
                 collection.Add(cookie);
             }
 
-            foreach (Cookie cookie in container.GetCookies(TritonLink))
+            foreach (Cookie cookie in container.GetCookies(MyTritonLink))
             {
                 collection.Add(cookie);
             }
