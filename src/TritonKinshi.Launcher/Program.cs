@@ -13,7 +13,7 @@ namespace TritonKinshi.Launcher
 #if DUMP
             DumpCredentials().Wait();
 #else
-            TestEnroll().Wait();
+            TestDrop().Wait();
 #endif
 
             Console.Write("All operations ended; press any key to exit..");
@@ -72,45 +72,15 @@ namespace TritonKinshi.Launcher
             }
 
             var cse105 = courses.Single(x => x.Code == "105");
+            cse105.Code = "105";
+
             var cat = await webReg.SearchCatelogAsync(cse105, sp18);
             Console.WriteLine($"{cse105,9}'s catelog is {cat}");
 
             var rests = await webReg.SearchRestrictionAsync(cse105, sp18);
             Console.WriteLine($"{cse105,9} is restricted to {string.Join("/", rests)}");
 
-            await webReg.SearchCourseTextAsync(cse, sp18);
-        }
-
-        private static async Task TestEnroll()
-        {
-            var webReg = PhantomJsWebReg.FromPersistedCredentials();
-
-            var terms = await webReg.GetTermsAsync();
-            var s118 = terms.Single(x => x.Code == "S118");
-
-            if (!await webReg.CheckEligibilityAsync(s118))
-            {
-                throw new Exception();
-            }
-
-            var subjects = await webReg.SearchSubjectListAsync(s118);
-            var mae = subjects.Single(x => x.Code == "MAE");
-
-            var mae8 = new Course
-            {
-                Id = new CourseId
-                {
-                    Subject = mae.Code,
-                    Code = "8",
-                    Section = 940830
-                },
-                TermCode = s118.Code,
-                GradingOption = GradingOption.Letter
-            };
-
-            mae8 = await webReg.EditEnrollAsync(mae8);
-            await webReg.AddEnrollAsync(mae8);
-            await webReg.SendEmailAsync(s118, "Successfully enrolled.");
+            var data = await webReg.SearchGroupData(cse105, sp18);
         }
 
         private static async Task TestDrop()

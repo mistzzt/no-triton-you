@@ -265,7 +265,7 @@ namespace TritonKinshi.Core
             var list = courses.Select(x => new CourseId
             {
                 Subject = subject.Code,
-                Code = x.CRSE_CODE.Trim()
+                Code = x.CRSE_CODE
             }).ToImmutableList();
 
             return list;
@@ -776,7 +776,9 @@ namespace TritonKinshi.Core
             {
                 ValidateResponse(message);
 
-                return await message.Content.ReadAsStringAsync();
+                var response = await message.Content.ReadAsStringAsync();
+
+                return response;
             }
         }
 
@@ -788,6 +790,7 @@ namespace TritonKinshi.Core
                     throw new NotSupportedException();
 
                 case HttpStatusCode.InternalServerError:
+                    Console.WriteLine(message.Content.ReadAsStringAsync().Result);
                     if (Debugger.IsAttached)
                         Debugger.Break();
                     break;
