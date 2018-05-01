@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CourseIdList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseId>;
 using SubjectList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Subject>;
 using TermList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Term>;
+using SectionList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseSectionInfo>;
 
 namespace TritonKinshi.Core
 {
@@ -55,6 +56,14 @@ namespace TritonKinshi.Core
         Task<(DateTime start, DateTime end)> GetEnrollAddDateAsync(Term term);
 
         Task<PassMessage> GetPassMessageAsync(Term term);
+
+        Task<string> SearchCatelogAsync(CourseId course, Term term);
+
+        Task<ImmutableList<string>> SearchRestrictionAsync(CourseId course, Term term);
+
+        Task<ImmutableList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term);
+
+        Task<SectionList> SearchGroupData(CourseId course, Term term);
 
         /// <summary>
         /// Updates credentials of current <see cref="IWebRegImpl"/> instance.

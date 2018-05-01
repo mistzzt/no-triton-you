@@ -14,6 +14,7 @@ using TritonKinshi.Core.Extensions;
 using CourseIdList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseId>;
 using SubjectList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Subject>;
 using TermList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Term>;
+using SectionList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseSectionInfo>;
 
 namespace TritonKinshi.Core
 {
@@ -624,11 +625,11 @@ namespace TritonKinshi.Core
             return response.Select(x => x.CRSE_REGIS_CODE).ToImmutableList();
         }
 
-        public async Task SearchSectionTextAsync(IEnumerable<CourseId> courses, Term term)
+        public async Task SearchSectionTextAsync(IEnumerable<int> sections, Term term)
         {
             var response = await RequestGetString(WebRegApi.SearchSectionText, new NameValueCollection
             {
-                ["sectnumlist"] = string.Join(":", courses.Select(x => x.Section)),
+                ["sectnumlist"] = string.Join(":", sections),
                 ["termcode"] = term.Code,
             });
 
@@ -656,6 +657,65 @@ namespace TritonKinshi.Core
             return response.Select(x => (text: x.TEXT, courseId: x.SUBJCRSE)).ToImmutableList();
         }
 
+        public async Task<SectionList> SearchGroupData(CourseId course, Term term)
+        {
+            var responseType = new[]
+            {
+                new
+                {
+                    AVAIL_SEAT = 0,
+                    BEFORE_DESC = string.Empty,
+                    BEGIN_HH_TIME = 0,
+                    BEGIN_MM_TIME = 0,
+                    BLDG_CODE = string.Empty,
+                    COUNT_ON_WAITLIST = 0,
+                    DAY_CODE = string.Empty,
+                    END_HH_TIME = 0,
+                    END_MM_TIME = 0,
+                    FK_CDI_INSTR_TYPE = string.Empty,
+                    FK_SPM_SPCL_MTG_CD = string.Empty,
+                    FK_SST_SCTN_STATCD = string.Empty,
+                    LONG_DESC = string.Empty,
+                    PERSON_FULL_NAME = string.Empty,
+                    PRIMARY_INSTR_FLAG = string.Empty,
+                    PRINT_FLAG = string.Empty,
+                    ROOM_CODE = string.Empty,
+                    SCTN_CPCTY_QTY = 0,
+                    SCTN_ENRLT_QTY = 0,
+                    SECTION_END_DATE = string.Empty,
+                    SECTION_NUMBER = 0,
+                    SECTION_START_DATE = string.Empty,
+                    SECT_CODE = string.Empty,
+                    START_DATE = string.Empty,
+                    STP_ENRLT_FLAG = string.Empty
+                }
+            };
+
+            var response = await RequestGet(WebRegApi.SearchGroupData, responseType, new NameValueCollection
+            {
+                ["subjcode"] = course.Subject,
+                ["crsecode"] = course.Code,
+                ["termcode"] = term.Code
+            });
+
+            return response.Select(x => new CourseSectionInfo
+            {
+                AvailableSeats = x.AVAIL_SEAT,
+                BuildingCode = x.BLDG_CODE,
+                WaitlistCount = x.COUNT_ON_WAITLIST,
+                InstructType = x.FK_CDI_INSTR_TYPE,
+                Instructor = x.PERSON_FULL_NAME,
+                RoomCode = x.ROOM_CODE,
+                Capacity = x.SCTN_CPCTY_QTY,
+                Enrolled = x.SCTN_ENRLT_QTY,
+                EndDate = x.SECTION_END_DATE,
+                StartDate = x.SECTION_START_DATE,
+                Number = x.SECTION_NUMBER,
+                Code = x.SECT_CODE,
+                SpecialType = x.FK_SPM_SPCL_MTG_CD
+            }).ToImmutableList();
+        }
+
         private static class WebRegApi
         {
             // no verification needed
@@ -678,11 +738,12 @@ namespace TritonKinshi.Core
             public const string LoadCourses = "/webreg2/svc/wradapter/secure/search-get-crse-list";
             public const string GetPreAuth = "/webreg2/svc/wradapter/secure/get-preauth-info";
 
-            // not implemented yet
             public const string SearchCatelog = "/webreg2/svc/wradapter/secure/search-get-catalog";
             public const string SearchRestriction = "/webreg2/svc/wradapter/secure/search-get-restriction";
             public const string SearchSectionText = "/webreg2/svc/wradapter/secure/search-get-section-text";
             public const string SearchCourseText = "/webreg2/svc/wradapter/secure/search-get-crse-text";
+
+            public const string SearchGroupData = "/webreg2/svc/wradapter/secure/search-load-group-data";
         }
 
         private async Task<T> RequestPost<T>(string api, T anonymousTypeObject, IEnumerable<KeyValuePair<string, string>> content)
@@ -727,7 +788,6 @@ namespace TritonKinshi.Core
                     throw new NotSupportedException();
 
                 case HttpStatusCode.InternalServerError:
-                    Console.WriteLine(message.Content.ReadAsStringAsync().Result);
                     if (Debugger.IsAttached)
                         Debugger.Break();
                     break;
@@ -735,8 +795,9 @@ namespace TritonKinshi.Core
                 case HttpStatusCode.OK:
                     if (string.Equals(message.Content.Headers.ContentType.MediaType, MediaTypeHtml, StringComparison.Ordinal))
                     {
-                        Console.WriteLine("Session timeout");
                         Console.WriteLine(message.Content.ReadAsStringAsync().Result);
+
+                        throw new Exception("Session timeout");
                     }
                     else if (!string.Equals(message.Content.Headers.ContentType.MediaType, MediaTypeJson,
                         StringComparison.Ordinal))
