@@ -12,7 +12,7 @@ namespace TritonKinshi.Core
         private readonly HttpClient _client;
         private readonly CookieContainer _container;
 
-        private IWebReg _webReg;
+        private IWebRegImpl _webReg;
 
         private string _major;
         private string _level;
@@ -57,7 +57,7 @@ namespace TritonKinshi.Core
         public string Name => _loaded ? _name : throw new InvalidOperationException();
         public string Balance => _loaded ? _balance : throw new InvalidOperationException();
 
-        public IWebReg CreateWebRegInstance()
+        public IWebRegImpl CreateWebRegInstance()
         {
             return _webReg ?? (_webReg = new PhantomJsWebReg(_client, _container));
         }
