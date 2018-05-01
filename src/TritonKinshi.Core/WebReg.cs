@@ -174,7 +174,7 @@ namespace TritonKinshi.Core
         public async Task<TermList> GetTermsAsync()
         {
             var terms = await RequestGet<Term[]>(WebRegApi.GetTerm, new NameValueCollection());
-            
+
             return terms.ToImmutableList();
         }
 
@@ -591,7 +591,7 @@ namespace TritonKinshi.Core
             {
                 CATALOG_DATA = string.Empty
             };
-            
+
             var response = await RequestGet(WebRegApi.SearchCatelog, responseType, new NameValueCollection
             {
                 ["subjcode"] = course.Subject,
@@ -613,7 +613,7 @@ namespace TritonKinshi.Core
                     CRSE_REGIS_CODE = string.Empty
                 }
             };
-            
+
             var response = await RequestGet(WebRegApi.SearchRestriction, responseType, new NameValueCollection
             {
                 ["subjcode"] = course.Subject,
@@ -635,7 +635,7 @@ namespace TritonKinshi.Core
             // unknown response
             Console.WriteLine(response);
         }
-        
+
         public async Task<ImmutableList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term)
         {
             var responseType = new[]
@@ -646,7 +646,7 @@ namespace TritonKinshi.Core
                     SUBJCRSE = string.Empty
                 }
             };
-            
+
             var response = await RequestGet(WebRegApi.SearchCourseText, responseType, new NameValueCollection
             {
                 ["subjlist"] = subject.Code,
@@ -655,7 +655,7 @@ namespace TritonKinshi.Core
 
             return response.Select(x => (text: x.TEXT, courseId: x.SUBJCRSE)).ToImmutableList();
         }
-        
+
         private static class WebRegApi
         {
             // no verification needed
@@ -711,30 +711,40 @@ namespace TritonKinshi.Core
             {
                 var response = await message.Content.ReadAsStringAsync();
 
-                try
-                {
-                    message.EnsureSuccessStatusCode();
-                }
-                catch (Exception ex)
-                {
-                    if (message.StatusCode == HttpStatusCode.BadRequest)
+                ValidateResponse(message);
+
+                return response;
+            }
+        }
+
+        private static void ValidateResponse(HttpResponseMessage message)
+        {
+            switch (message.StatusCode)
+            {
+                case HttpStatusCode.BadRequest:
+                    throw new NotSupportedException();
+
+                case HttpStatusCode.InternalServerError:
+                    if (Debugger.IsAttached)
+                        Debugger.Break();
+                    break;
+
+                case HttpStatusCode.OK:
+                    if (string.Equals(message.Content.Headers.ContentType.MediaType, MediaTypeHtml, StringComparison.Ordinal))
+                    {
+                        // todo: handle invalid cred
+                    }
+                    else if (!string.Equals(message.Content.Headers.ContentType.MediaType, MediaTypeJson,
+                        StringComparison.Ordinal))
                     {
                         throw new NotSupportedException();
                     }
 
-                    if (message.StatusCode == HttpStatusCode.InternalServerError)
-                    {
-                        if (Debugger.IsAttached)
-                            Debugger.Break();
-                    }
-                    
-                    // todo: handle exception
-
-                    Console.WriteLine(ex);
-                    Console.WriteLine(response);
-                }
-                return response;
+                    break;
             }
         }
+
+        private const string MediaTypeJson = "application/json";
+        private const string MediaTypeHtml = "text/html";
     }
 }
