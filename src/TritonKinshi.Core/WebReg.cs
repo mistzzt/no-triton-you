@@ -17,7 +17,7 @@ using TermList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Te
 
 namespace TritonKinshi.Core
 {
-    public sealed class PhantomJsWebReg : IWebReg
+    public sealed class PhantomJsWebReg : IWebRegImpl
     {
         private const string PhantomJsPath = "phantomjs.exe";
         private const string ScriptPath = "loadWebReg.js";
@@ -165,13 +165,16 @@ namespace TritonKinshi.Core
             _disposed = true;
         }
 
+        public void UpdateCredentials(ISsoCredentialProvider sso)
+        {
+            var cookies = sso.GetCredentials();
+            _container.Add(cookies);
+        }
+
         public async Task<TermList> GetTermsAsync()
         {
-            var response = await _client.GetStringAsync(WebRegApi.GetTerm);
-            Console.WriteLine(response);
-
-            var terms = JsonConvert.DeserializeObject<Term[]>(response);
-
+            var terms = await RequestGet<Term[]>(WebRegApi.GetTerm, new NameValueCollection());
+            
             return terms.ToImmutableList();
         }
 
@@ -582,6 +585,77 @@ namespace TritonKinshi.Core
             }
         }
 
+        public async Task<string> SearchCatelogAsync(CourseId course, Term term)
+        {
+            var responseType = new
+            {
+                CATALOG_DATA = string.Empty
+            };
+            
+            var response = await RequestGet(WebRegApi.SearchCatelog, responseType, new NameValueCollection
+            {
+                ["subjcode"] = course.Subject,
+                ["crsecode"] = course.Code,
+                ["termcode"] = term.Code,
+            });
+
+            return response.CATALOG_DATA;
+        }
+
+        public async Task<ImmutableList<string>> SearchRestrictionAsync(CourseId course, Term term)
+        {
+            var responseType = new[]
+            {
+                new
+                {
+                    CRSE_REGIS_TYPE_CD = string.Empty,
+                    CRSE_REGIS_FLAG = string.Empty,
+                    CRSE_REGIS_CODE = string.Empty
+                }
+            };
+            
+            var response = await RequestGet(WebRegApi.SearchRestriction, responseType, new NameValueCollection
+            {
+                ["subjcode"] = course.Subject,
+                ["crsecode"] = course.Code,
+                ["termcode"] = term.Code,
+            });
+
+            return response.Select(x => x.CRSE_REGIS_CODE).ToImmutableList();
+        }
+
+        public async Task SearchSectionTextAsync(IEnumerable<CourseId> courses, Term term)
+        {
+            var response = await RequestGetString(WebRegApi.SearchSectionText, new NameValueCollection
+            {
+                ["sectnumlist"] = string.Join(":", courses.Select(x => x.Section)),
+                ["termcode"] = term.Code,
+            });
+
+            // unknown response
+            Console.WriteLine(response);
+        }
+        
+        public async Task<ImmutableList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term)
+        {
+            var responseType = new[]
+            {
+                new
+                {
+                    TEXT = string.Empty,
+                    SUBJCRSE = string.Empty
+                }
+            };
+            
+            var response = await RequestGet(WebRegApi.SearchCourseText, responseType, new NameValueCollection
+            {
+                ["subjlist"] = subject.Code,
+                ["termcode"] = term.Code,
+            });
+
+            return response.Select(x => (text: x.TEXT, courseId: x.SUBJCRSE)).ToImmutableList();
+        }
+        
         private static class WebRegApi
         {
             // no verification needed
@@ -611,15 +685,6 @@ namespace TritonKinshi.Core
             public const string SearchCourseText = "/webreg2/svc/wradapter/secure/search-get-crse-text";
         }
 
-        private async Task<T> RequestGet<T>(string api, T anonymousTypeObject, NameValueCollection query)
-        {
-            var queryString = query.BuildQueryString();
-
-            var response = await _client.GetStringAsync(api + queryString);
-
-            return JsonConvert.DeserializeAnonymousType(response, anonymousTypeObject);
-        }
-
         private async Task<T> RequestPost<T>(string api, T anonymousTypeObject, IEnumerable<KeyValuePair<string, string>> content)
         {
             var message = await _client.PostAsync(api, new FormUrlEncodedContent(content));
@@ -628,13 +693,48 @@ namespace TritonKinshi.Core
             return JsonConvert.DeserializeAnonymousType(response, anonymousTypeObject);
         }
 
+        private async Task<T> RequestGet<T>(string api, T anonymousTypeObject, NameValueCollection query)
+        {
+            return JsonConvert.DeserializeAnonymousType(await RequestGetString(api, query), anonymousTypeObject);
+        }
+
         private async Task<T> RequestGet<T>(string api, NameValueCollection query)
         {
-            var queryString = query.BuildQueryString();
+            return JsonConvert.DeserializeObject<T>(await RequestGetString(api, query));
+        }
 
-            var response = await _client.GetStringAsync(api + queryString);
+        private async Task<string> RequestGetString(string api, NameValueCollection queryCollection)
+        {
+            var queryString = queryCollection.BuildQueryString();
 
-            return JsonConvert.DeserializeObject<T>(response);
+            using (var message = await _client.GetAsync(api + queryString))
+            {
+                var response = await message.Content.ReadAsStringAsync();
+
+                try
+                {
+                    message.EnsureSuccessStatusCode();
+                }
+                catch (Exception ex)
+                {
+                    if (message.StatusCode == HttpStatusCode.BadRequest)
+                    {
+                        throw new NotSupportedException();
+                    }
+
+                    if (message.StatusCode == HttpStatusCode.InternalServerError)
+                    {
+                        if (Debugger.IsAttached)
+                            Debugger.Break();
+                    }
+                    
+                    // todo: handle exception
+
+                    Console.WriteLine(ex);
+                    Console.WriteLine(response);
+                }
+                return response;
+            }
         }
     }
 }
