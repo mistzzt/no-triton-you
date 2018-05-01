@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2043
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TritonKinshi.Core", "TritonKinshi.Core\TritonKinshi.Core.csproj", "{4233196C-F9E8-428C-BD89-7DF27548B763}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TritonKinshi.Launcher", "TritonKinshi.Launcher\TritonKinshi.Launcher.csproj", "{996CFA00-663E-4E84-9841-33A39232417A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6A8DE018-E5AE-4FFE-9CBF-48ED7F196BB2}"
+	ProjectSection(SolutionItems) = preProject
+		loadWebReg.js = loadWebReg.js
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4233196C-F9E8-428C-BD89-7DF27548B763}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4233196C-F9E8-428C-BD89-7DF27548B763}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4233196C-F9E8-428C-BD89-7DF27548B763}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4233196C-F9E8-428C-BD89-7DF27548B763}.Release|Any CPU.Build.0 = Release|Any CPU
+		{996CFA00-663E-4E84-9841-33A39232417A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{996CFA00-663E-4E84-9841-33A39232417A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{996CFA00-663E-4E84-9841-33A39232417A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{996CFA00-663E-4E84-9841-33A39232417A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C8FA216A-6504-44D7-B6B5-E2D8EE737671}
+	EndGlobalSection
+EndGlobal
