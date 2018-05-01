@@ -687,10 +687,14 @@ namespace TritonKinshi.Core
 
         private async Task<T> RequestPost<T>(string api, T anonymousTypeObject, IEnumerable<KeyValuePair<string, string>> content)
         {
-            var message = await _client.PostAsync(api, new FormUrlEncodedContent(content));
-            var response = await message.Content.ReadAsStringAsync();
+            using (var message = await _client.PostAsync(api, new FormUrlEncodedContent(content)))
+            {
+                ValidateResponse(message);
 
-            return JsonConvert.DeserializeAnonymousType(response, anonymousTypeObject);
+                var response = await message.Content.ReadAsStringAsync();
+
+                return JsonConvert.DeserializeAnonymousType(response, anonymousTypeObject);
+            }
         }
 
         private async Task<T> RequestGet<T>(string api, T anonymousTypeObject, NameValueCollection query)
@@ -709,11 +713,9 @@ namespace TritonKinshi.Core
 
             using (var message = await _client.GetAsync(api + queryString))
             {
-                var response = await message.Content.ReadAsStringAsync();
-
                 ValidateResponse(message);
 
-                return response;
+                return await message.Content.ReadAsStringAsync();
             }
         }
 
@@ -725,6 +727,7 @@ namespace TritonKinshi.Core
                     throw new NotSupportedException();
 
                 case HttpStatusCode.InternalServerError:
+                    Console.WriteLine(message.Content.ReadAsStringAsync().Result);
                     if (Debugger.IsAttached)
                         Debugger.Break();
                     break;
@@ -732,7 +735,8 @@ namespace TritonKinshi.Core
                 case HttpStatusCode.OK:
                     if (string.Equals(message.Content.Headers.ContentType.MediaType, MediaTypeHtml, StringComparison.Ordinal))
                     {
-                        // todo: handle invalid cred
+                        Console.WriteLine("Session timeout");
+                        Console.WriteLine(message.Content.ReadAsStringAsync().Result);
                     }
                     else if (!string.Equals(message.Content.Headers.ContentType.MediaType, MediaTypeJson,
                         StringComparison.Ordinal))
