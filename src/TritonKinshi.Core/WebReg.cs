@@ -271,55 +271,9 @@ namespace TritonKinshi.Core
             return list;
         }
 
-        public async Task<CourseIdList> GetEnrolledCoursesAsync(Term term)
+        public async Task<SectionList> GetClassAsync(Term term)
         {
-            var responseType = new[]
-            {
-                new
-                {
-					// personal information
-					PERSON_ID = string.Empty,
-                    ENROLL_STATUS = string.Empty,
-                    GRADE_OPTION = string.Empty,
-
-					// course id
-					SUBJ_CODE = string.Empty,
-                    CRSE_CODE = string.Empty,
-                    SECTION_NUMBER = 0,
-                    SECT_CODE = string.Empty,
-
-					// course information
-					START_DATE = string.Empty,
-                    CRSE_TITLE = string.Empty,
-                    LONG_DESC = string.Empty,
-                    PERSON_FULL_NAME = string.Empty,
-                    TERM_CODE = string.Empty,
-
-					// time and location
-					DAY_CODE = string.Empty,
-                    BEGIN_HH_TIME = 0,
-                    END_HH_TIME = 0,
-                    BEGIN_MM_TIME = 0,
-                    END_MM_TIME = 0,
-                    BLDG_CODE = string.Empty,
-                    ROOM_CODE = string.Empty,
-					
-					// unknown parts
-					SECT_CREDIT_HRS = 0d,
-                    GRADE_OPTN_CD_PLUS = string.Empty,
-                    WT_POS = string.Empty,
-                    PRIMARY_INSTR_FLAG = string.Empty,
-                    FK_PCH_INTRL_REFID = 0,
-                    NEED_HEADROW = false,
-                    FK_SPM_SPCL_MTG_CD = string.Empty,
-                    SECT_CREDIT_HRS_PL = string.Empty,
-                    SECTION_HEAD = 0,
-                    FK_CDI_INSTR_TYPE = string.Empty,
-                    FK_SEC_SCTN_NUM = 0
-                }
-            };
-
-            var cs = await RequestGet(WebRegApi.GetClass, responseType, new NameValueCollection
+            var response = await RequestGet<SectionList>(WebRegApi.GetClass, new NameValueCollection
             {
                 ["termcode"] = term.Code,
                 ["schedname"] = string.Empty,
@@ -327,13 +281,7 @@ namespace TritonKinshi.Core
                 ["sectnum"] = string.Empty
             });
 
-            // todo: select real vals
-            return cs.Select(x => new CourseId
-            {
-                Subject = x.SUBJ_CODE.Trim(),
-                Code = x.CRSE_CODE.Trim(),
-                Section = x.SECTION_NUMBER
-            }).ToImmutableList();
+            return response;
         }
 
         public async Task<ImmutableList<(int order, CourseId course)>> GetPrerequisitesAsync(Term term, CourseId course)
@@ -657,63 +605,16 @@ namespace TritonKinshi.Core
             return response.Select(x => (text: x.TEXT, courseId: x.SUBJCRSE)).ToImmutableList();
         }
 
-        public async Task<SectionList> SearchGroupData(CourseId course, Term term)
+        public async Task<SectionList> SearchGroupDataAsync(CourseId course, Term term)
         {
-            var responseType = new[]
-            {
-                new
-                {
-                    AVAIL_SEAT = 0,
-                    BEFORE_DESC = string.Empty,
-                    BEGIN_HH_TIME = 0,
-                    BEGIN_MM_TIME = 0,
-                    BLDG_CODE = string.Empty,
-                    COUNT_ON_WAITLIST = 0,
-                    DAY_CODE = string.Empty,
-                    END_HH_TIME = 0,
-                    END_MM_TIME = 0,
-                    FK_CDI_INSTR_TYPE = string.Empty,
-                    FK_SPM_SPCL_MTG_CD = string.Empty,
-                    FK_SST_SCTN_STATCD = string.Empty,
-                    LONG_DESC = string.Empty,
-                    PERSON_FULL_NAME = string.Empty,
-                    PRIMARY_INSTR_FLAG = string.Empty,
-                    PRINT_FLAG = string.Empty,
-                    ROOM_CODE = string.Empty,
-                    SCTN_CPCTY_QTY = 0,
-                    SCTN_ENRLT_QTY = 0,
-                    SECTION_END_DATE = string.Empty,
-                    SECTION_NUMBER = 0,
-                    SECTION_START_DATE = string.Empty,
-                    SECT_CODE = string.Empty,
-                    START_DATE = string.Empty,
-                    STP_ENRLT_FLAG = string.Empty
-                }
-            };
-
-            var response = await RequestGet(WebRegApi.SearchGroupData, responseType, new NameValueCollection
+            var response = await RequestGet<SectionList>(WebRegApi.SearchGroupData, new NameValueCollection
             {
                 ["subjcode"] = course.Subject,
                 ["crsecode"] = course.Code,
                 ["termcode"] = term.Code
             });
 
-            return response.Select(x => new CourseSectionInfo
-            {
-                AvailableSeats = x.AVAIL_SEAT,
-                BuildingCode = x.BLDG_CODE,
-                WaitlistCount = x.COUNT_ON_WAITLIST,
-                InstructType = x.FK_CDI_INSTR_TYPE,
-                Instructor = x.PERSON_FULL_NAME,
-                RoomCode = x.ROOM_CODE,
-                Capacity = x.SCTN_CPCTY_QTY,
-                Enrolled = x.SCTN_ENRLT_QTY,
-                EndDate = x.SECTION_END_DATE,
-                StartDate = x.SECTION_START_DATE,
-                Number = x.SECTION_NUMBER,
-                Code = x.SECT_CODE,
-                SpecialType = x.FK_SPM_SPCL_MTG_CD
-            }).ToImmutableList();
+            return response;
         }
 
         private static class WebRegApi

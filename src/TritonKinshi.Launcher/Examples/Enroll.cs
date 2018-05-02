@@ -35,10 +35,10 @@ namespace TritonKinshi.Launcher.Examples
             var mae8Id = courses.Single(x => x.Code.Trim() == "8");
 
             // get all sections
-            var sections = await webReg.SearchGroupData(mae8Id, s118);
+            var sections = await webReg.SearchGroupDataAsync(mae8Id, s118);
 
             // give the section id we want to enroll
-            mae8Id.Section = sections.First(x => x.InstructType == "DI").Number;
+            mae8Id.Section = sections.First(x => x.FK_CDI_INSTR_TYPE == "DI").SECTION_NUMBER;
 
             // set term and grading option
             var mae8 = new Course

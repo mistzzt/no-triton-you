@@ -1,31 +1,86 @@
-﻿namespace TritonKinshi.Core
+﻿// ReSharper disable InconsistentNaming
+namespace TritonKinshi.Core
 {
     public struct CourseSectionInfo
     {
-        public int AvailableSeats { get; set; }
+        public string PERSON_ID;
 
-        public string BuildingCode { get; set; }
+        public string ENROLL_STATUS;
 
-        public int WaitlistCount { get; set; }
+        public string GRADE_OPTION;
 
-        public string InstructType { get; set; }
+        public string SUBJ_CODE;
 
-        public string Instructor { get; set; }
+        public string CRSE_CODE;
 
-        public string RoomCode { get; set; }
+        public string SECT_CODE;
 
-        public int Capacity { get; set; }
+        public int SECTION_NUMBER;
 
-        public int Enrolled { get; set; }
+        public string START_DATE;
 
-        public string EndDate { get; set; }
+        public string CRSE_TITLE;
 
-        public string StartDate { get; set; }
+        public string LONG_DESC;
 
-        public int Number { get; set; }
+        public string PERSON_FULL_NAME;
 
-        public string Code { get; set; }
+        public string TERM_CODE;
 
-        public string SpecialType { get; set; }
+        public string DAY_CODE;
+
+        public int BEGIN_HH_TIME;
+
+        public int END_HH_TIME;
+
+        public int BEGIN_MM_TIME;
+
+        public int END_MM_TIME;
+
+        public string BLDG_CODE;
+
+        public string ROOM_CODE;
+
+        public double SECT_CREDIT_HRS;
+
+        public string GRADE_OPTN_CD_PLUS;
+
+        public string WT_POS;
+
+        public string PRIMARY_INSTR_FLAG;
+
+        public int FK_PCH_INTRL_REFID;
+
+        public bool NEED_HEADROW;
+
+        public string FK_SPM_SPCL_MTG_CD;
+
+        public string SECT_CREDIT_HRS_PL;
+
+        public int SECTION_HEAD;
+
+        public string FK_CDI_INSTR_TYPE;
+
+        public int FK_SEC_SCTN_NUM;
+
+        public int AVAIL_SEAT;
+
+        public string BEFORE_DESC;
+
+        public string COUNT_ON_WAITLIST;
+
+        public string FK_SST_SCTN_STATCD;
+
+        public string PRINT_FLAG;
+
+        public string SECTION_END_DATE;
+
+        public string SECTION_START_DATE;
+
+        public string STP_ENRLT_FLAG;
+
+        public int SCTN_CPCTY_QTY;
+
+        public int SCTN_ENRLT_QTY;
     }
 }

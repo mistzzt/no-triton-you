@@ -35,7 +35,7 @@ namespace TritonKinshi.Core
 
         Task<CourseIdList> SearchCourseListAsync(Term term, Subject subject);
 
-        Task<CourseIdList> GetEnrolledCoursesAsync(Term term);
+        Task<SectionList> GetClassAsync(Term term);
 
         Task<ImmutableList<(int order, CourseId course)>> GetPrerequisitesAsync(Term term, CourseId course);
 
@@ -63,7 +63,7 @@ namespace TritonKinshi.Core
 
         Task<ImmutableList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term);
 
-        Task<SectionList> SearchGroupData(CourseId course, Term term);
+        Task<SectionList> SearchGroupDataAsync(CourseId course, Term term);
 
         /// <summary>
         /// Updates credentials of current <see cref="IWebRegImpl"/> instance.
