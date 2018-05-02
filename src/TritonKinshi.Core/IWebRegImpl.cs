@@ -17,7 +17,7 @@ namespace TritonKinshi.Core
     {
         /// <summary>
         /// Get a list of available terms.
-        /// Can be called without check <see cref="CheckEligibilityAsync"/> first.
+        /// Can be called without <see cref="SetTermAsync"/> first.
         /// </summary>
         /// <returns>Available terms currently.</returns>
         Task<TermList> GetTermsAsync();
@@ -26,8 +26,9 @@ namespace TritonKinshi.Core
         /// Checks whether current session of <see cref="IWebRegImpl"/> instance is valid.
         /// </summary>
         /// <param name="term">Term of pending operations.</param>
+        /// <param name="logged">Whether `start-term` is logged</param>
         /// <returns>true if credentials are valid and the term is available.</returns>
-        Task<bool> CheckEligibilityAsync(Term term);
+        Task<bool> CheckEligibilityAsync(Term term, bool logged = true);
 
         Task<SubjectList> SearchSubjectListAsync(Term term);
 
@@ -64,6 +65,10 @@ namespace TritonKinshi.Core
         Task<ImmutableList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term);
 
         Task<SectionList> SearchGroupDataAsync(CourseId course, Term term);
+
+        Task GetStatusStartAsync(Term term);
+
+        Task SetTermAsync(Term term);
 
         /// <summary>
         /// Updates credentials of current <see cref="IWebRegImpl"/> instance.

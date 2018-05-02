@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using TritonKinshi.Core.Extensions;
+
 using CourseIdList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseId>;
 using SubjectList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Subject>;
 using TermList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Term>;
@@ -18,141 +17,17 @@ using SectionList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core
 
 namespace TritonKinshi.Core
 {
-    public sealed class PhantomJsWebReg : IWebRegImpl
+    public sealed class RestWebRegImpl : IWebRegImpl
     {
-        private const string PhantomJsPath = "phantomjs.exe";
-        private const string ScriptPath = "loadWebReg.js";
-        private const string QuarterDefault = "S118";
-
-        private const string PersistedCookiePath = "cookies.json";
-
         private readonly HttpClient _client;
         private readonly CookieContainer _container;
 
-        private string _cookiesPath;
         private bool _disposed;
 
-        internal PhantomJsWebReg(HttpClient client, CookieContainer container)
+        internal RestWebRegImpl(HttpClient client, CookieContainer container)
         {
             _client = client;
             _container = container;
-        }
-
-        internal static PhantomJsWebReg FromPersistedCredentials()
-        {
-            if (!File.Exists(PersistedCookiePath))
-            {
-                throw new FileNotFoundException("Cannot find credentials", PersistedCookiePath);
-            }
-
-            var container = new CookieContainer();
-
-            var clientHandler = new HttpClientHandler
-            {
-                AllowAutoRedirect = true,
-                UseCookies = true,
-                CookieContainer = container
-            };
-
-            var client = new HttpClient(clientHandler)
-            {
-                BaseAddress = new Uri(Urls.ActUrl)
-            };
-            var instance = new PhantomJsWebReg(client, container) { _cookiesPath = PersistedCookiePath };
-            instance.LoadCookies().Wait();
-
-            return instance;
-        }
-
-        private sealed class LowerContractResolver : DefaultContractResolver
-        {
-            protected override string ResolvePropertyName(string propertyName)
-            {
-                return propertyName.ToLowerInvariant();
-            }
-        }
-
-        private async Task WriteCookies(string path = null)
-        {
-            var list = new List<object>();
-
-            foreach (Cookie cookie in _container.GetAllRelatedCookies())
-            {
-                list.Add(new
-                {
-                    name = cookie.Name,
-                    value = cookie.Value,
-                    domain = cookie.Domain,
-                    path = cookie.Path,
-                    httponly = cookie.HttpOnly
-                });
-            }
-
-            _cookiesPath = path ?? Path.GetTempFileName();
-            using (var stream = new FileStream(_cookiesPath, FileMode.Create))
-            {
-                using (var writer = new StreamWriter(stream))
-                {
-                    await writer.WriteAsync(JsonConvert.SerializeObject(list));
-                }
-            }
-        }
-
-        private Task StartPhantomJs()
-        {
-            return Task.Run(() =>
-            {
-                var process = Process.Start(new ProcessStartInfo
-                {
-                    FileName = PhantomJsPath,
-                    Arguments = string.Join(" ",
-                        "--ignore-ssl-errors=true",
-                        "--local-to-remote-url-access=true",
-                        ScriptPath,
-                        _cookiesPath,
-                        QuarterDefault
-                    ),
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                });
-
-                if (process == null)
-                {
-                    return;
-                }
-
-                process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
-                process.BeginOutputReadLine();
-                process.WaitForExit();
-            });
-        }
-
-        internal async Task PrepareWebReg()
-        {
-            await WriteCookies();
-            await StartPhantomJs();
-            await LoadCookies();
-
-            await WriteCookies(PersistedCookiePath);
-        }
-
-        private async Task LoadCookies()
-        {
-            using (var reader = new StreamReader(new FileStream(_cookiesPath, FileMode.Open)))
-            {
-                var content = await reader.ReadToEndAsync();
-                var cookies = JsonConvert.DeserializeObject<List<Cookie>>(content, new JsonSerializerSettings
-                {
-                    ContractResolver = new LowerContractResolver()
-                });
-
-                foreach (var cookie in cookies)
-                {
-                    _container.Add(cookie);
-                }
-            }
         }
 
         public void Dispose()
@@ -164,6 +39,17 @@ namespace TritonKinshi.Core
 
             _client.Dispose();
             _disposed = true;
+        }
+
+        public async Task SetTermAsync(Term term)
+        {
+            await GetStatusStartAsync(term);
+            if (await CheckEligibilityAsync(term, true))
+            {
+                return;
+            }
+
+            throw new Exception("set term failed");
         }
 
         public void UpdateCredentials(ISsoCredentialProvider sso)
@@ -179,7 +65,7 @@ namespace TritonKinshi.Core
             return terms.ToImmutableList();
         }
 
-        public async Task<bool> CheckEligibilityAsync(Term term)
+        public async Task<bool> CheckEligibilityAsync(Term term, bool logged = false)
         {
             var responseType = new
             {
@@ -194,7 +80,7 @@ namespace TritonKinshi.Core
             {
                 ["termcode"] = term.Code,
                 ["seqid"] = term.SequenceId.ToString(),
-                ["logged"] = false.ToString()
+                ["logged"] = logged.ToString()
             });
 
             return response.OPSIV == "SUCCESS";
@@ -617,10 +503,51 @@ namespace TritonKinshi.Core
             return response;
         }
 
+        private async Task SendWrLoggerAsync()
+        {
+            var task = _client.PostAsync(WebRegApi.WrLogger, new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["action"] = "START+PAGE",
+                ["crsecode"] = "N/A",
+                ["subjcode"] = "N/A",
+                ["termcode"] = "N/A",
+                ["result"] = "",
+                ["sectnum"] = ""
+            }));
+
+            using (var msg = await task)
+            {
+                msg.EnsureSuccessStatusCode();
+            }
+        }
+
+        public async Task GetStatusStartAsync(Term term)
+        {
+            var requestType = new[]
+            {
+                new
+                {
+                    ACADEMIC_LEVEL = string.Empty,
+                    REGIS_STATUS = string.Empty,
+                    ACADEMIC_STATUS = string.Empty,
+                    TERM_SEQ_ID = 0
+                }
+            };
+            
+            await RequestGet(WebRegApi.GetStatusStart, requestType, new NameValueCollection
+            {
+                ["seqid"] = term.SequenceId.ToString(),
+                ["termcode"] = term.Code,
+            });
+        }
+
         private static class WebRegApi
         {
             // no verification needed
             public const string GetTerm = "/webreg2/svc/wradapter/get-term";
+            public const string WrLogger = "/webreg2/svc/wradapter/wr-logger";
+            public const string GetStatusStart = "/webreg2/svc/wradapter/get-status-start";
+            public const string GetMsgToProceed = "/webreg2/svc/wradapter/get-msg-to-proceed";
 
             // core functions
             public const string GetPrerequisites = "/webreg2/svc/wradapter/secure/get-prerequisites";
@@ -656,6 +583,18 @@ namespace TritonKinshi.Core
                 var response = await message.Content.ReadAsStringAsync();
 
                 return JsonConvert.DeserializeAnonymousType(response, anonymousTypeObject);
+            }
+        }
+
+        private async Task<string> RequestPostString(string api, IEnumerable<KeyValuePair<string, string>> content)
+        {
+            using (var message = await _client.PostAsync(api, new FormUrlEncodedContent(content)))
+            {
+                ValidateResponse(message);
+
+                var response = await message.Content.ReadAsStringAsync();
+
+                return response;
             }
         }
 

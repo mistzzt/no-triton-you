@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using TritonKinshi.Core;
 
@@ -7,20 +6,13 @@ namespace TritonKinshi.Launcher.Examples
 {
     internal static class Enroll
     {
-        public static async Task TestEnroll()
+        public static async Task TestEnroll(IWebRegImpl webReg)
         {
-            // load saved credentials
-            var webReg = PhantomJsWebReg.FromPersistedCredentials();
-
             // load terms and select Summer Session I 2018
             var terms = await webReg.GetTermsAsync();
             var s118 = terms.Single(x => x.Code == "S118");
 
-            // validate term selection
-            if (!await webReg.CheckEligibilityAsync(s118))
-            {
-                throw new Exception();
-            }
+            await webReg.SetTermAsync(s118);
 
             // load subjects
             var subjects = await webReg.SearchSubjectListAsync(s118);

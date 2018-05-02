@@ -59,7 +59,7 @@ namespace TritonKinshi.Core
 
         public IWebRegImpl CreateWebRegInstance()
         {
-            return _webReg ?? (_webReg = new PhantomJsWebReg(_client, _container));
+            return _webReg ?? (_webReg = new RestWebRegImpl(_client, _container));
         }
 
         public async Task LogoutAsync()
