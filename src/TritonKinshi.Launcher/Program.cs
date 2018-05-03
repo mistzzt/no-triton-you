@@ -29,6 +29,7 @@ namespace TritonKinshi.Launcher
 
             ITritonLink tLink = new TritonLink(sso);
             sso.Dispose();
+            pwd.Dispose();
 
             await tLink.InitializeAsync();
 

@@ -10,7 +10,7 @@ using Value = System.Collections.Generic.KeyValuePair<string, string>;
 
 namespace TritonKinshi.Core
 {
-    internal sealed class UserIdSsoProvider : ISsoCredentialProvider
+    public sealed class UserIdSsoProvider : ISsoCredentialProvider
     {
         private readonly string _user;
         private readonly SecureString _password;
@@ -19,9 +19,7 @@ namespace TritonKinshi.Core
         private readonly HttpClient _client;
         private readonly CookieContainer _container;
 
-        private bool _pending;
-
-        private const string TritonLinkUrl = "https://mytritonlink.ucsd.edu";
+        private bool _pending; 
 
         public UserIdSsoProvider(string user, SecureString password)
         {
@@ -49,7 +47,7 @@ namespace TritonKinshi.Core
             _pending = true;
 
             // load webpage and redirect first
-            var postUri = (await _client.GetAsync(new Uri(TritonLinkUrl))).RequestMessage.RequestUri;
+            var postUri = (await _client.GetAsync(Urls.MyTritonLink)).RequestMessage.RequestUri;
             var content = new FormUrlEncodedContent(new[]
             {
                 new Value("initAuthMethod", "urn:mace:ucsd.edu:sso:studentsso"),
