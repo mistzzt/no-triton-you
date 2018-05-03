@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
@@ -10,10 +9,10 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using TritonKinshi.Core.Extensions;
 
-using CourseIdList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseId>;
-using SubjectList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Subject>;
-using TermList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Term>;
-using SectionList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseSectionInfo>;
+using CourseIdList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.CourseId>;
+using SubjectList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.Subject>;
+using TermList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.Term>;
+using SectionList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.CourseSectionInfo>;
 
 namespace TritonKinshi.Core
 {
@@ -43,6 +42,7 @@ namespace TritonKinshi.Core
 
         public async Task SetTermAsync(Term term)
         {
+            await SendWrLoggerAsync();
             await GetStatusStartAsync(term);
             if (await CheckEligibilityAsync(term, true))
             {
@@ -62,7 +62,7 @@ namespace TritonKinshi.Core
         {
             var terms = await RequestGet<Term[]>(WebRegApi.GetTerm, new NameValueCollection());
 
-            return terms.ToImmutableList();
+            return terms;
         }
 
         public async Task<bool> CheckEligibilityAsync(Term term, bool logged = false)
@@ -98,7 +98,7 @@ namespace TritonKinshi.Core
                 subjects[i].Code = subjects[i].Code?.Trim();
             }
 
-            return subjects.ToImmutableList();
+            return subjects;
         }
 
         public async Task<CourseIdList> GetPreAuthInfoAsync(Term term)
@@ -128,7 +128,7 @@ namespace TritonKinshi.Core
             {
                 Subject = x.SUBJ_CODE.Trim(),
                 Code = x.CRSE_CODE
-            }).ToImmutableList();
+            }).ToArray();
         }
 
         public async Task<CourseIdList> SearchCourseListAsync(Term term, Subject subject)
@@ -152,7 +152,7 @@ namespace TritonKinshi.Core
             {
                 Subject = subject.Code,
                 Code = x.CRSE_CODE
-            }).ToImmutableList();
+            }).ToArray();
 
             return list;
         }
@@ -170,7 +170,7 @@ namespace TritonKinshi.Core
             return response;
         }
 
-        public async Task<ImmutableList<(int order, CourseId course)>> GetPrerequisitesAsync(Term term, CourseId course)
+        public async Task<IReadOnlyList<(int order, CourseId course)>> GetPrerequisitesAsync(Term term, CourseId course)
         {
             var responseType = new[]
             {
@@ -196,7 +196,7 @@ namespace TritonKinshi.Core
             {
                 Code = x.COURSE_CODE.Trim(),
                 Subject = x.SUBJECT_CODE.Trim()
-            })).ToImmutableList();
+            })).ToArray();
         }
 
         public async Task<bool> AddEnrollAsync(Course course)
@@ -437,7 +437,7 @@ namespace TritonKinshi.Core
             return response.CATALOG_DATA;
         }
 
-        public async Task<ImmutableList<string>> SearchRestrictionAsync(CourseId course, Term term)
+        public async Task<IReadOnlyList<string>> SearchRestrictionAsync(CourseId course, Term term)
         {
             var responseType = new[]
             {
@@ -456,7 +456,7 @@ namespace TritonKinshi.Core
                 ["termcode"] = term.Code,
             });
 
-            return response.Select(x => x.CRSE_REGIS_CODE).ToImmutableList();
+            return response.Select(x => x.CRSE_REGIS_CODE).ToArray();
         }
 
         public async Task SearchSectionTextAsync(IEnumerable<int> sections, Term term)
@@ -471,7 +471,7 @@ namespace TritonKinshi.Core
             Console.WriteLine(response);
         }
 
-        public async Task<ImmutableList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term)
+        public async Task<IReadOnlyList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term)
         {
             var responseType = new[]
             {
@@ -488,7 +488,7 @@ namespace TritonKinshi.Core
                 ["termcode"] = term.Code,
             });
 
-            return response.Select(x => (text: x.TEXT, courseId: x.SUBJCRSE)).ToImmutableList();
+            return response.Select(x => (text: x.TEXT, courseId: x.SUBJCRSE)).ToArray();
         }
 
         public async Task<SectionList> SearchGroupDataAsync(CourseId course, Term term)
@@ -533,7 +533,7 @@ namespace TritonKinshi.Core
                     TERM_SEQ_ID = 0
                 }
             };
-            
+
             await RequestGet(WebRegApi.GetStatusStart, requestType, new NameValueCollection
             {
                 ["seqid"] = term.SequenceId.ToString(),

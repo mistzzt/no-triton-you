@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using CourseIdList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseId>;
-using SubjectList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Subject>;
-using TermList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.Term>;
-using SectionList = System.Collections.Immutable.ImmutableList<TritonKinshi.Core.CourseSectionInfo>;
+using CourseIdList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.CourseId>;
+using SubjectList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.Subject>;
+using TermList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.Term>;
+using SectionList = System.Collections.Generic.IReadOnlyList<TritonKinshi.Core.CourseSectionInfo>;
 
 namespace TritonKinshi.Core
 {
@@ -38,7 +38,7 @@ namespace TritonKinshi.Core
 
         Task<SectionList> GetClassAsync(Term term);
 
-        Task<ImmutableList<(int order, CourseId course)>> GetPrerequisitesAsync(Term term, CourseId course);
+        Task<IReadOnlyList<(int order, CourseId course)>> GetPrerequisitesAsync(Term term, CourseId course);
 
         Task<bool> AddEnrollAsync(Course course);
 
@@ -60,9 +60,9 @@ namespace TritonKinshi.Core
 
         Task<string> SearchCatelogAsync(CourseId course, Term term);
 
-        Task<ImmutableList<string>> SearchRestrictionAsync(CourseId course, Term term);
+        Task<IReadOnlyList<string>> SearchRestrictionAsync(CourseId course, Term term);
 
-        Task<ImmutableList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term);
+        Task<IReadOnlyList<(string text, string courseId)>> SearchCourseTextAsync(Subject subject, Term term);
 
         Task<SectionList> SearchGroupDataAsync(CourseId course, Term term);
 
