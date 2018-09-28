@@ -50,11 +50,9 @@ namespace TritonKinshi.Core
             var postUri = (await _client.GetAsync(Urls.MyTritonLink)).RequestMessage.RequestUri;
             var content = new FormUrlEncodedContent(new[]
             {
-                new Value("initAuthMethod", "urn:mace:ucsd.edu:sso:studentsso"),
                 new Value("urn:mace:ucsd.edu:sso:username", _user),
                 new Value("urn:mace:ucsd.edu:sso:password", _password.ToUnsecureString()),
-                new Value("urn:mace:ucsd.edu:sso:authmethod", "urn:mace:ucsd.edu:sso:studentsso"),
-                new Value("submit", "submit")
+                new Value("_eventId_proceed", "")
             });
 
             // parse the saml form
