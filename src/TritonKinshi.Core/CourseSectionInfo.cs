@@ -67,7 +67,7 @@ namespace TritonKinshi.Core
 
         public string BEFORE_DESC;
 
-        public string COUNT_ON_WAITLIST;
+        public int COUNT_ON_WAITLIST;
 
         public string FK_SST_SCTN_STATCD;
 
